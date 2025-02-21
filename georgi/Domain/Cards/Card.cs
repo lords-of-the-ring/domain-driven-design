@@ -91,8 +91,7 @@ public sealed class Card : DomainEntity
 
         if (RequestedStatus != expectedStatus)
         {
-            throw new CardDomainException(CardId,
-                $"Expected status must be the same as requested status, but was {expectedStatus}.");
+            throw new CardDomainException(CardId, Errors.ExpectedStatusMustBeTheSameAsRequestedStatus);
         }
 
         CheckIfCurrentStatusIsCompatible(expectedStatus);
@@ -114,7 +113,7 @@ public sealed class Card : DomainEntity
         return card;
     }
 
-    private void CheckIfCurrentStatusIsCompatible(CardStatus newStatus)
+    internal void CheckIfCurrentStatusIsCompatible(CardStatus newStatus)
     {
         if (CurrentStatus == CardStatus.Requested && newStatus is not CardStatus.Issued)
         {
@@ -124,8 +123,7 @@ public sealed class Card : DomainEntity
 
         if (CurrentStatus == CardStatus.Issued && newStatus is not CardStatus.Active)
         {
-            throw new CardDomainException(CardId,
-                $"Requested status must be Active when current status is Issued, but was {newStatus}.");
+            throw new CardDomainException(CardId, Errors.RequestedStatusMustBeActiveWhenCurrentStatusIsIssued);
         }
 
         if (CurrentStatus == CardStatus.Active && newStatus is not CardStatus.Blocked)
@@ -145,5 +143,11 @@ public sealed class Card : DomainEntity
     {
         public const string ExpectedStatusMustBeTerminated =
             "Expected status must be Terminated when requested status is null";
+
+        public const string RequestedStatusMustBeActiveWhenCurrentStatusIsIssued =
+            "Requested status must be Active when current status is Issued";
+
+        public const string ExpectedStatusMustBeTheSameAsRequestedStatus =
+            "Expected status must be the same as requested status";
     }
 }

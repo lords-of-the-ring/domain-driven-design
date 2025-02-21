@@ -17,7 +17,7 @@ namespace Domain.UnitTests.Cards.Issuance;
 public sealed class CardIssuanceTests
 {
     [Fact]
-    public void Request_ShouldThrowException_WhenRequestingInitialCardIssuanceButCreditStatusIsNotActive()
+    public void Request_ShouldThrowException_WhenRequestingInitialCardIssuanceAndCreditStatusIsNotActive()
     {
         //Arrange
         var credit = TestHelper.CreateInstance<Credit>()
@@ -47,7 +47,7 @@ public sealed class CardIssuanceTests
     }
 
     [Fact]
-    public void Request_ShouldThrowException_WhenRequestingInitialCardIssuanceButCreditTypeIsNotRegular()
+    public void Request_ShouldThrowException_WhenRequestingInitialCardIssuanceAndCreditTypeIsNotRegular()
     {
         //Arrange
         var credit = TestHelper.CreateInstance<Credit>()
@@ -78,7 +78,7 @@ public sealed class CardIssuanceTests
     }
 
     [Fact]
-    public void Request_ShouldThrowException_WhenRequestingCardIssuanceRenewalButPendingAccountBlocksArePresent()
+    public void Request_ShouldThrowException_WhenRequestingCardIssuanceRenewalAndPendingAccountBlocksArePresent()
     {
         //Arrange
         var credit = TestHelper.CreateInstance<Credit>()

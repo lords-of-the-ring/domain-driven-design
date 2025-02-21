@@ -84,4 +84,125 @@ public sealed class CardTests
         card.CurrentStatus.ShouldBe(CardStatus.Terminated);
         card.RequestedStatus.ShouldBeNull();
     }
+
+    [Fact]
+    public void
+        CompleteStatusChange_ShouldSetCurrentStatusToTerminatedAndRequestedStatusToNull_WhenBothRequestedStatusAndExpectedStatusAreTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Issued)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Terminated);
+
+        //Act
+        card.CompleteStatusChange(CardStatus.Terminated);
+
+        //Assert
+        card.CurrentStatus.ShouldBe(CardStatus.Terminated);
+        card.RequestedStatus.ShouldBeNull();
+    }
+
+    [Fact]
+    public void
+        CompleteStatusChange_ShouldThrowException_WhenRequestedStatusIsTerminatedAndExpectedStatusIsNotTerminatedButExpectedStatusIsNotCompatibleWithCurrentStatus()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Issued)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Terminated)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() => card.CompleteStatusChange(CardStatus.Blocked));
+
+        //Assert
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.RequestedStatusMustBeActiveWhenCurrentStatusIsIssued);
+    }
+
+    [Fact]
+    public void
+        CompleteStatusChange_ShouldSetCurrentStatusToExpectedStatus_WhenRequestedStatusIsTerminatedAndExpectedStatusIsNotTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Active)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Terminated);
+
+        //Act
+        card.CompleteStatusChange(CardStatus.Blocked);
+
+        //Assert
+        card.CurrentStatus.ShouldBe(CardStatus.Blocked);
+        card.RequestedStatus.ShouldBe(CardStatus.Terminated);
+    }
+
+    [Fact]
+    public void
+        CompleteStatusChange_ShouldSetCurrentStatusToTerminatedAndRequestedStatusToNull_WhenRequestedStatusIsNotTerminatedAndExpectedStatusIsTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Blocked)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Active);
+
+        //Act
+        card.CompleteStatusChange(CardStatus.Terminated);
+
+        //Assert
+        card.CurrentStatus.ShouldBe(CardStatus.Terminated);
+        card.RequestedStatus.ShouldBeNull();
+    }
+
+    [Fact]
+    public void CompleteStatusChange_ShouldThrowException_WhenRequestedStatusAndExpectedStatusAreNotTheSame()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Requested)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Issued)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() => card.CompleteStatusChange(CardStatus.Active));
+
+        //Assert
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.ExpectedStatusMustBeTheSameAsRequestedStatus);
+    }
+
+    [Fact]
+    public void
+        CompleteStatusChange_ShouldThrowException_WhenExpectedStatusIsTheSameAsRequestedStatusButExpectedStatusIsNotCompatibleWithCurrentStatus()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Issued)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Blocked)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() => card.CompleteStatusChange(CardStatus.Blocked));
+
+        //Assert
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.RequestedStatusMustBeActiveWhenCurrentStatusIsIssued);
+    }
+
+    [Fact]
+    public void
+        CompleteStatusChange_ShouldSetCurrentStatusToExpectedStatusAndRequestedStatusToNull_WhenExpectedStatusIsTheSameAsRequestedStatusAndExpectedStatusIsCompatibleWithCurrentStatus()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Active)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Blocked);
+
+        //Act
+        card.CompleteStatusChange(CardStatus.Blocked);
+
+        //Assert
+        card.CurrentStatus.ShouldBe(CardStatus.Blocked);
+        card.RequestedStatus.ShouldBeNull();
+    }
 }
