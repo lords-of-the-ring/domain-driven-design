@@ -62,7 +62,7 @@ public sealed class CardTermination : DomainEntity
         };
 
         cardTerminationRepository.AddCardTermination(termination);
-        card.RequestStatus(CardStatus.Terminated);
+        card.RequestStatusChange(CardStatus.Terminated);
         termination.RaiseDomainEvent(new CardTerminationRequestedDomainEvent { CardTermination = termination });
     }
 

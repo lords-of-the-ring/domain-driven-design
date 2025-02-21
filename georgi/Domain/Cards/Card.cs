@@ -1,5 +1,6 @@
 using Domain.Abstractions;
 using Domain.Accounts;
+using Domain.Cards.Issuance;
 using Domain.Cards.Issuers;
 
 namespace Domain.Cards;
@@ -22,7 +23,7 @@ public sealed class Card : DomainEntity
 
     public bool HasExactStatus(CardStatus status) => CurrentStatus == status && RequestedStatus is null;
 
-    public void RequestStatus(CardStatus newStatus)
+    public void RequestStatusChange(CardStatus newStatus)
     {
         if (CurrentStatus is CardStatus.Terminated)
         {
@@ -58,8 +59,7 @@ public sealed class Card : DomainEntity
 
         if (RequestedStatus is null && expectedStatus is not CardStatus.Terminated)
         {
-            throw new CardDomainException(CardId,
-                $"Expected status must be Terminated when requested status is null, but was {expectedStatus}.");
+            throw new CardDomainException(CardId, Errors.ExpectedStatusMustBeTerminated);
         }
 
         if (RequestedStatus is null)
@@ -68,17 +68,24 @@ public sealed class Card : DomainEntity
             return;
         }
 
-        if (RequestedStatus == CardStatus.Terminated && expectedStatus is CardStatus.Terminated)
+        if (RequestedStatus is CardStatus.Terminated && expectedStatus is CardStatus.Terminated)
         {
             CurrentStatus = CardStatus.Terminated;
             RequestedStatus = null;
             return;
         }
 
-        if (RequestedStatus == CardStatus.Terminated)
+        if (RequestedStatus is CardStatus.Terminated)
         {
             CheckIfCurrentStatusIsCompatible(expectedStatus);
             CurrentStatus = expectedStatus;
+            return;
+        }
+
+        if (expectedStatus is CardStatus.Terminated)
+        {
+            CurrentStatus = CardStatus.Terminated;
+            RequestedStatus = null;
             return;
         }
 
@@ -109,25 +116,34 @@ public sealed class Card : DomainEntity
 
     private void CheckIfCurrentStatusIsCompatible(CardStatus newStatus)
     {
-        throw CurrentStatus switch
+        if (CurrentStatus == CardStatus.Requested && newStatus is not CardStatus.Issued)
         {
-            CardStatus.Requested when newStatus is not CardStatus.Issued =>
-                new CardDomainException(CardId,
-                    $"Requested status must be Issued when current status is Requested, but was {newStatus}."),
+            throw new CardDomainException(CardId,
+                $"Requested status must be Issued when current status is Requested, but was {newStatus}.");
+        }
 
-            CardStatus.Issued when newStatus is not CardStatus.Active =>
-                new CardDomainException(CardId,
-                    $"Requested status must be Active when current status is Issued, but was {newStatus}."),
+        if (CurrentStatus == CardStatus.Issued && newStatus is not CardStatus.Active)
+        {
+            throw new CardDomainException(CardId,
+                $"Requested status must be Active when current status is Issued, but was {newStatus}.");
+        }
 
-            CardStatus.Active when newStatus is not CardStatus.Blocked =>
-                new CardDomainException(CardId,
-                    $"Requested status must be Blocked when current status is Active, but was {newStatus}."),
+        if (CurrentStatus == CardStatus.Active && newStatus is not CardStatus.Blocked)
+        {
+            throw new CardDomainException(CardId,
+                $"Requested status must be Blocked when current status is Active, but was {newStatus}.");
+        }
 
-            CardStatus.Blocked when newStatus is not CardStatus.Active =>
-                new CardDomainException(CardId,
-                    $"Requested status must be Active when current status is Blocked, but was {newStatus}."),
+        if (CurrentStatus == CardStatus.Blocked && newStatus is not CardStatus.Active)
+        {
+            throw new CardDomainException(CardId,
+                $"Requested status must be Active when current status is Blocked, but was {newStatus}.");
+        }
+    }
 
-            _ => new NotSupportedException($"Current status {CurrentStatus} is not supported.")
-        };
+    public static class Errors
+    {
+        public const string ExpectedStatusMustBeTerminated =
+            "Expected status must be Terminated when requested status is null";
     }
 }
