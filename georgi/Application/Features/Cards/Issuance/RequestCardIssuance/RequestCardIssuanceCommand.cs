@@ -1,9 +1,10 @@
 using Domain.Accounts;
 using Domain.Cards;
+using Domain.Cards.Issuers;
 
-namespace Application;
+namespace Application.Features.Cards.Issuance.RequestCardIssuance;
 
-public sealed record RequestCardCommand
+public sealed record RequestCardIssuanceCommand
 {
     public required AccountId AccountId { get; init; }
 

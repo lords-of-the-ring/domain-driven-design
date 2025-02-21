@@ -1,9 +1,8 @@
 using Domain.Abstractions;
 using Domain.Accounts;
+using Domain.Cards.Issuers;
 using Domain.Credits;
 using Domain.Users;
-
-using ErrorOr;
 
 namespace Domain.Cards.Issuance;
 
@@ -23,36 +22,40 @@ public sealed class CardIssuance : DomainEntity
 
     public CardExpiryDate? CardExpiryDate { get; private set; }
 
-    public void Complete(IDateTime dateTime)
+    public CardPan? CardPan { get; private set; }
+
+    public void Complete(IDateTime dateTime, CardExpiryDate expiryDate, CardPan cardPan)
     {
         if (CompleteDate is not null)
         {
             return;
         }
 
-        Card.CompleteStatusChange(CardStatus.Issued);
         CompleteDate = CardIssuanceCompleteDate.From(dateTime);
+        CardExpiryDate = expiryDate;
+        CardPan = cardPan;
+        Card.CompleteStatusChange(CardStatus.Issued);
+        RaiseDomainEvent(new CardIssuanceCompletedDomainEvent { Card = Card });
     }
 
-    public static CardIssuance Request(
+    public static CardId Request(
         UserId userId,
         Credit credit,
         AccountId accountId,
-        LastAccountCard lastCard,
+        LastAccountCardIssuance lastCardIssuance,
         AccountBlockInfo blockInfo,
         CardType cardType,
         CardIssuerId cardIssuerId,
-        IDateTime dateTime)
+        IDateTime dateTime,
+        ICardIssuanceRepository cardIssuanceRepository)
     {
-        if (lastCard.Value is null)
+        if (lastCardIssuance.Value is null)
         {
-            var result = CheckIfRequestingInitialCardIsAllowed(credit);
-            result.ThrowIfError();
+            CheckIfRequestingInitialCardIsAllowed(credit);
         }
         else
         {
-            var result = CheckIfRequestingRenewedCardIsAllowed(blockInfo, lastCard, dateTime);
-            result.ThrowIfError();
+            CheckIfRequestingRenewedCardIsAllowed(blockInfo, lastCardIssuance);
         }
 
         var card = Card.Create(accountId, cardType, cardIssuerId);
@@ -62,74 +65,34 @@ public sealed class CardIssuance : DomainEntity
             CardId = card.CardId, Card = card, UserId = userId, RequestDate = CardIssuanceRequestDate.From(dateTime)
         };
 
-        cardIssuance.RaiseDomainEvent(
-            new CardIssuanceRequestedDomainEvent { Card = card, CardIssuance = cardIssuance });
+        cardIssuanceRepository.AddCardIssuance(cardIssuance);
+        card.RequestStatus(CardStatus.Requested);
+        cardIssuance.RaiseDomainEvent(new CardIssuanceRequestedDomainEvent { CardIssuance = cardIssuance });
 
-        return cardIssuance;
+        return card.CardId;
     }
 
-    public static ErrorOr<Success> CheckIfRequestingInitialCardIsAllowed(Credit credit)
+    private static void CheckIfRequestingInitialCardIsAllowed(Credit credit)
     {
         if (credit.Status != CreditStatus.Active)
         {
-            return Error.Validation(Errors.CreditStatusMustBeActive);
+            throw new CreditDomainException(credit.CreditId, "Credit status must be Active.");
         }
 
         if (credit.Type != CreditType.Regular)
         {
-            return Error.Validation(Errors.CreditTypeMustBeRegular);
+            throw new CreditDomainException(credit.CreditId, "Credit type must be Regular.");
         }
-
-        return new Success();
     }
 
-    public static ErrorOr<Success> CheckIfRequestingRenewedCardIsAllowed(AccountBlockInfo accountBlockInfo,
-        LastAccountCard lastCard,
-        IDateTime dateTime)
+    private static void CheckIfRequestingRenewedCardIsAllowed(AccountBlockInfo blockInfo,
+        LastAccountCardIssuance lastCardIssuance)
     {
-        if (accountBlockInfo.HasPendingBlocks)
+        ArgumentNullException.ThrowIfNull(lastCardIssuance.Value);
+
+        if (blockInfo.HasPendingBlocks)
         {
-            return Error.Validation(Errors.PendingAccountBlocksPresent);
+            throw new CardDomainException(lastCardIssuance.Value.CardId, "Pending account blocks are present.");
         }
-
-        ArgumentNullException.ThrowIfNull(lastCard.Value, nameof(lastCard.Value));
-
-        if (lastCard.Value.CardIssuance.CardExpiryDate is null)
-        {
-            return Error.Validation(Errors.CardExpiryDateIsMissing);
-        }
-
-        if (lastCard.Value.Card.HasExactStatus(CardStatus.Active))
-        {
-            if (!lastCard.Value.CardIssuance.CardExpiryDate.IsInPreExpiryPeriod(dateTime))
-            {
-                return Error.Validation(Errors.CardNotInPreExpiryPeriod);
-            }
-
-            return new Success();
-        }
-
-        if (lastCard.Value.Card.HasExactStatus(CardStatus.Terminated))
-        {
-            if (!lastCard.Value.CardIssuance.CardExpiryDate.IsInAfterExpiryPeriod(dateTime))
-            {
-                return Error.Validation(Errors.CardNotInAfterExpiryPeriod);
-            }
-
-            return new Success();
-        }
-
-        return Error.Validation(Errors.CardExactStatusMustBeActiveOrTerminated);
-    }
-
-    private static class Errors
-    {
-        public const string CreditStatusMustBeActive = "Credit status must be Active";
-        public const string CreditTypeMustBeRegular = "Credit type must be Regular";
-        public const string PendingAccountBlocksPresent = "Pending account blocks are present";
-        public const string CardExpiryDateIsMissing = "Card expiry date is missing";
-        public const string CardNotInPreExpiryPeriod = "Card is not in pre expiry period";
-        public const string CardNotInAfterExpiryPeriod = "Card is not in after expiry period";
-        public const string CardExactStatusMustBeActiveOrTerminated = "Card exact status must be Active or Terminated";
     }
 }

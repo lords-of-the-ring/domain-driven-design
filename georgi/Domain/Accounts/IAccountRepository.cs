@@ -2,5 +2,5 @@ namespace Domain.Accounts;
 
 public interface IAccountRepository
 {
-    Task<Account> FindAsync(AccountId accountId, CancellationToken cancellationToken);
+    Task<Account> SingleAsync(AccountId accountId, CancellationToken cancellationToken);
 }

@@ -1,10 +1,10 @@
-using Domain.Abstractions;
-
 namespace Domain.Cards.Issuance;
 
 public sealed record CardExpiryDate
 {
-    public bool IsInPreExpiryPeriod(IDateTime dateTime) => true;
+    private CardExpiryDate() { }
 
-    public bool IsInAfterExpiryPeriod(IDateTime dateTime) => true;
+    public required DateTimeOffset Value { get; init; }
+
+    public static CardExpiryDate From(DateTimeOffset value) => new() { Value = value };
 }
