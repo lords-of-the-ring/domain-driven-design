@@ -35,7 +35,7 @@ public sealed class CardIssuance : DomainEntity
         CardExpiryDate = expiryDate;
         CardPan = cardPan;
         Card.CompleteStatusChange(CardStatus.Issued);
-        RaiseDomainEvent(new CardIssuanceCompletedDomainEvent { Card = Card });
+        RaiseDomainEvent(new CardIssuedDomainEvent { Card = Card });
     }
 
     public static CardId Request(

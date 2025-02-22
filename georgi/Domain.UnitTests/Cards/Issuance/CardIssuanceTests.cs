@@ -17,6 +17,72 @@ namespace Domain.UnitTests.Cards.Issuance;
 public sealed class CardIssuanceTests
 {
     [Fact]
+    public void Complete_ShouldNotModifyCardIssuanceProperties_WhenCompleteDateIsNotNull()
+    {
+        //Arrange
+        var completeDate = TestHelper.CreateInstance<IssuanceCompleteDate>();
+        var cardIssuance = TestHelper.CreateInstance<CardIssuance>()
+            .SetProperty(x => x.CompleteDate, completeDate);
+
+        //Act
+        cardIssuance.Complete(null!, null!, null!);
+
+        //Assert
+        cardIssuance.AssertAllProperties(p =>
+        {
+            p.Expect(x => x.CardId, null);
+            p.Expect(x => x.Card, null);
+            p.Expect(x => x.RequestDate, null);
+            p.Expect(x => x.CompleteDate, completeDate);
+            p.Expect(x => x.UserId, null);
+            p.Expect(x => x.CardExpiryDate, null);
+            p.Expect(x => x.CardPan, null);
+            p.Expect(x => x.DomainEvents, []);
+        });
+    }
+
+    [Fact]
+    public void Complete_ShouldModifyCardIssuanceProperties_WhenCompleteDateIsNull()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>();
+        card.SetProperty(c => c.CardId, CardId.New());
+        card.SetProperty(c => c.CurrentStatus, CardStatus.Requested);
+        card.SetProperty(c => c.RequestedStatus, CardStatus.Issued);
+
+        var cardIssuance = TestHelper.CreateInstance<CardIssuance>()
+            .SetProperty(x => x.CardId, card.CardId)
+            .SetProperty(x => x.Card, card);
+
+        var dateTime = Substitute.For<IDateTime>();
+        dateTime.UtcNow.Returns(new DateTimeOffset(new DateTime(2025, 07, 23)));
+
+        var pan = TestHelper.CreateInstance<CardPan>();
+        var expiryDate = TestHelper.CreateInstance<CardExpiryDate>();
+
+        //Act
+        cardIssuance.Complete(dateTime, expiryDate, pan);
+
+        //Assert
+        var cardIssuedDomainEvent = new CardIssuedDomainEvent { Card = card };
+
+        cardIssuance.AssertAllProperties(p =>
+        {
+            p.Expect(x => x.CardId, card.CardId);
+            p.Expect(x => x.Card, card);
+            p.Expect(x => x.RequestDate, null);
+            p.Expect(x => x.CompleteDate, IssuanceCompleteDate.From(dateTime));
+            p.Expect(x => x.UserId, null);
+            p.Expect(x => x.CardExpiryDate, expiryDate);
+            p.Expect(x => x.CardPan, pan);
+            p.Expect(x => x.DomainEvents, [cardIssuedDomainEvent]);
+        });
+
+        card.CurrentStatus.ShouldBe(CardStatus.Issued);
+        card.RequestedStatus.ShouldBeNull();
+    }
+
+    [Fact]
     public void Request_ShouldThrowException_WhenRequestingInitialCardIssuanceAndCreditStatusIsNotActive()
     {
         //Arrange
