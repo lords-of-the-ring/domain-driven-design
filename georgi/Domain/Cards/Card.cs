@@ -21,18 +21,16 @@ public sealed class Card : DomainEntity
 
     public CardStatus? RequestedStatus { get; private set; }
 
-    public bool HasExactStatus(CardStatus status) => CurrentStatus == status && RequestedStatus is null;
-
     public void RequestStatusChange(CardStatus newStatus)
     {
         if (CurrentStatus is CardStatus.Terminated)
         {
-            return;
+            throw new CardDomainException(CardId, Errors.CurrentStatusIsAlreadyTerminated);
         }
 
         if (RequestedStatus is CardStatus.Terminated)
         {
-            return;
+            throw new CardDomainException(CardId, Errors.RequestedStatusIsAlreadyTerminated);
         }
 
         if (newStatus is CardStatus.Terminated)
@@ -43,7 +41,7 @@ public sealed class Card : DomainEntity
 
         if (RequestedStatus is not null)
         {
-            throw new CardDomainException(CardId, $"Requested status must be null, but was {RequestedStatus}.");
+            throw new CardDomainException(CardId, Errors.RequestedStatusMustBeNullWhenNewStatusIsNotTerminated);
         }
 
         ValidateStatusCompatibility(newStatus);
@@ -99,20 +97,6 @@ public sealed class Card : DomainEntity
         RequestedStatus = null;
     }
 
-    public static Card Create(AccountId accountId, CardType cardType, CardIssuerId cardIssuerId)
-    {
-        var card = new Card
-        {
-            CardId = CardId.New(),
-            AccountId = accountId,
-            Type = cardType,
-            IssuerId = cardIssuerId,
-            CurrentStatus = CardStatus.Requested,
-        };
-
-        return card;
-    }
-
     internal void ValidateStatusCompatibility(CardStatus nextStatus)
     {
         if (CurrentStatus is CardStatus.Terminated)
@@ -146,10 +130,38 @@ public sealed class Card : DomainEntity
         }
     }
 
+    public static Card Create(AccountId accountId, CardType cardType, CardIssuerId cardIssuerId)
+    {
+        var card = new Card
+        {
+            CardId = CardId.New(),
+            AccountId = accountId,
+            Type = cardType,
+            IssuerId = cardIssuerId,
+            CurrentStatus = CardStatus.Requested,
+        };
+
+        return card;
+    }
+
     public static class Errors
     {
-        public const string CurrentStatusCannotBeTerminated = "Current status cannot be Terminated";
+        // Request status change errors
+        public const string CurrentStatusIsAlreadyTerminated = "Current status is already Terminated";
+        public const string RequestedStatusIsAlreadyTerminated = "Requested status is already Terminated";
 
+        public const string RequestedStatusMustBeNullWhenNewStatusIsNotTerminated =
+            "Requested status must be null when new status is not Terminated";
+
+        // Complete status change errors
+        public const string ExpectedStatusMustBeTheSameAsRequestedStatus =
+            "Expected status must be the same as requested status";
+
+        public const string ExpectedStatusMustBeTerminated =
+            "Expected status must be Terminated when requested status is null";
+
+        // Validate status compatibility errors
+        public const string CurrentStatusCannotBeTerminated = "Current status cannot be Terminated";
         public const string NextStatusCannotBeTerminated = "Next status cannot be Terminated";
 
         public const string NextStatusMustBeActiveWhenCurrentStatusIsIssued =
@@ -163,11 +175,5 @@ public sealed class Card : DomainEntity
 
         public const string NextStatusMustBeActiveWhenCurrentStatusIsBlocked =
             "Next status must be Active when current status is Blocked";
-
-        public const string ExpectedStatusMustBeTheSameAsRequestedStatus =
-            "Expected status must be the same as requested status";
-
-        public const string ExpectedStatusMustBeTerminated =
-            "Expected status must be Terminated when requested status is null";
     }
 }

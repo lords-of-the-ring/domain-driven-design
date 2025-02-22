@@ -11,27 +11,98 @@ namespace Domain.UnitTests.Cards;
 public sealed class CardTests
 {
     [Fact]
-    public void Create_ShouldReturnNewCardInstance()
+    public void RequestStatusChange_ShouldThrowException_WhenCurrentStatusIsAlreadyTerminated()
     {
         //Arrange
-        var accountId = AccountId.New();
-        const CardType cardType = CardType.VirtualWithPlastic;
-        var cardIssuerId = CardIssuerId.From(123);
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Terminated)
+            .SetProperty(x => x.CardId, CardId.New());
 
         //Act
-        var card = Card.Create(accountId, cardType, cardIssuerId);
+        var exception = Should.Throw<CardDomainException>(() => card.RequestStatusChange(CardStatus.Active));
 
         //Assert
-        card.AssertAllProperties(p =>
-        {
-            p.Expect(x => x.CardId, card.CardId);
-            p.Expect(x => x.AccountId, accountId);
-            p.Expect(x => x.Type, cardType);
-            p.Expect(x => x.IssuerId, cardIssuerId);
-            p.Expect(x => x.CurrentStatus, CardStatus.Requested);
-            p.Expect(x => x.RequestedStatus, null);
-            p.Expect(x => x.DomainEvents, []);
-        });
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.CurrentStatusIsAlreadyTerminated);
+    }
+
+    [Fact]
+    public void RequestStatusChange_ShouldThrowException_WhenRequestedStatusIsAlreadyTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Active)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Terminated)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() => card.RequestStatusChange(CardStatus.Blocked));
+
+        //Assert
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.RequestedStatusIsAlreadyTerminated);
+    }
+
+    [Fact]
+    public void RequestStatusChange_ShouldSetRequestedStatusToTerminated_WhenNewStatusIsTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Active)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Blocked);
+
+        //Act
+        card.RequestStatusChange(CardStatus.Terminated);
+
+        //Assert
+        card.RequestedStatus.ShouldBe(CardStatus.Terminated);
+    }
+
+    [Fact]
+    public void RequestStatusChange_ShouldThrowException_WhenNewStatusIsNotTerminatedAndRequestedStatusIsNotNull()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Issued)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Active)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() => card.RequestStatusChange(CardStatus.Blocked));
+
+        //Assert
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.RequestedStatusMustBeNullWhenNewStatusIsNotTerminated);
+    }
+
+    [Fact]
+    public void RequestStatusChange_ShouldThrowException_WhenCurrentStatusIsNotCompatibleWithNewStatus()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Requested)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() => card.RequestStatusChange(CardStatus.Active));
+
+        //Assert
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.NextStatusMustBeIssuedWhenCurrentStatusIsRequested);
+    }
+
+    [Fact]
+    public void RequestStatusChange_SetRequestedStatusToNewStatus_WhenAllValidationsSucceed()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Blocked);
+
+        //Act
+        card.RequestStatusChange(CardStatus.Active);
+
+        //Assert
+        card.RequestedStatus.ShouldBe(CardStatus.Active);
     }
 
     [Fact]
@@ -306,5 +377,45 @@ public sealed class CardTests
         //Arrange
         exception.CardId.ShouldBe(card.CardId);
         exception.Reason.ShouldBe(Card.Errors.NextStatusMustBeActiveWhenCurrentStatusIsBlocked);
+    }
+
+    [Theory]
+    [InlineData(CardStatus.Requested, CardStatus.Issued)]
+    [InlineData(CardStatus.Issued, CardStatus.Active)]
+    [InlineData(CardStatus.Active, CardStatus.Blocked)]
+    [InlineData(CardStatus.Blocked, CardStatus.Active)]
+    public void ValidateStatusCompatibility_ShouldNotThrowException_WhenCurrentStatusIsCompatibleWithNextStatus(
+        CardStatus currentStatus, CardStatus nextStatus)
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, currentStatus);
+
+        //Act
+        card.ValidateStatusCompatibility(nextStatus);
+    }
+
+    [Fact]
+    public void Create_ShouldReturnNewCardInstance()
+    {
+        //Arrange
+        var accountId = AccountId.New();
+        const CardType cardType = CardType.VirtualWithPlastic;
+        var cardIssuerId = CardIssuerId.From(123);
+
+        //Act
+        var card = Card.Create(accountId, cardType, cardIssuerId);
+
+        //Assert
+        card.AssertAllProperties(p =>
+        {
+            p.Expect(x => x.CardId, card.CardId);
+            p.Expect(x => x.AccountId, accountId);
+            p.Expect(x => x.Type, cardType);
+            p.Expect(x => x.IssuerId, cardIssuerId);
+            p.Expect(x => x.CurrentStatus, CardStatus.Requested);
+            p.Expect(x => x.RequestedStatus, null);
+            p.Expect(x => x.DomainEvents, []);
+        });
     }
 }
