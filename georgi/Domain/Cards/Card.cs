@@ -46,7 +46,7 @@ public sealed class Card : DomainEntity
             throw new CardDomainException(CardId, $"Requested status must be null, but was {RequestedStatus}.");
         }
 
-        CheckIfCurrentStatusIsCompatible(newStatus);
+        ValidateStatusCompatibility(newStatus);
         RequestedStatus = newStatus;
     }
 
@@ -77,7 +77,7 @@ public sealed class Card : DomainEntity
 
         if (RequestedStatus is CardStatus.Terminated)
         {
-            CheckIfCurrentStatusIsCompatible(expectedStatus);
+            ValidateStatusCompatibility(expectedStatus);
             CurrentStatus = expectedStatus;
             return;
         }
@@ -94,7 +94,7 @@ public sealed class Card : DomainEntity
             throw new CardDomainException(CardId, Errors.ExpectedStatusMustBeTheSameAsRequestedStatus);
         }
 
-        CheckIfCurrentStatusIsCompatible(expectedStatus);
+        ValidateStatusCompatibility(expectedStatus);
         CurrentStatus = expectedStatus;
         RequestedStatus = null;
     }
@@ -113,41 +113,61 @@ public sealed class Card : DomainEntity
         return card;
     }
 
-    internal void CheckIfCurrentStatusIsCompatible(CardStatus newStatus)
+    internal void ValidateStatusCompatibility(CardStatus nextStatus)
     {
-        if (CurrentStatus == CardStatus.Requested && newStatus is not CardStatus.Issued)
+        if (CurrentStatus is CardStatus.Terminated)
         {
-            throw new CardDomainException(CardId,
-                $"Requested status must be Issued when current status is Requested, but was {newStatus}.");
+            throw new CardDomainException(CardId, Errors.CurrentStatusCannotBeTerminated);
         }
 
-        if (CurrentStatus == CardStatus.Issued && newStatus is not CardStatus.Active)
+        if (nextStatus is CardStatus.Terminated)
         {
-            throw new CardDomainException(CardId, Errors.RequestedStatusMustBeActiveWhenCurrentStatusIsIssued);
+            throw new CardDomainException(CardId, Errors.NextStatusCannotBeTerminated);
         }
 
-        if (CurrentStatus == CardStatus.Active && newStatus is not CardStatus.Blocked)
+        if (CurrentStatus is CardStatus.Requested && nextStatus is not CardStatus.Issued)
         {
-            throw new CardDomainException(CardId,
-                $"Requested status must be Blocked when current status is Active, but was {newStatus}.");
+            throw new CardDomainException(CardId, Errors.NextStatusMustBeIssuedWhenCurrentStatusIsRequested);
         }
 
-        if (CurrentStatus == CardStatus.Blocked && newStatus is not CardStatus.Active)
+        if (CurrentStatus is CardStatus.Issued && nextStatus is not CardStatus.Active)
         {
-            throw new CardDomainException(CardId,
-                $"Requested status must be Active when current status is Blocked, but was {newStatus}.");
+            throw new CardDomainException(CardId, Errors.NextStatusMustBeActiveWhenCurrentStatusIsIssued);
+        }
+
+        if (CurrentStatus is CardStatus.Active && nextStatus is not CardStatus.Blocked)
+        {
+            throw new CardDomainException(CardId, Errors.NextStatusMustBeBlockedWhenCurrentStatusIsActive);
+        }
+
+        if (CurrentStatus is CardStatus.Blocked && nextStatus is not CardStatus.Active)
+        {
+            throw new CardDomainException(CardId, Errors.NextStatusMustBeActiveWhenCurrentStatusIsBlocked);
         }
     }
 
     public static class Errors
     {
-        public const string ExpectedStatusMustBeTerminated =
-            "Expected status must be Terminated when requested status is null";
+        public const string CurrentStatusCannotBeTerminated = "Current status cannot be Terminated";
 
-        public const string RequestedStatusMustBeActiveWhenCurrentStatusIsIssued =
-            "Requested status must be Active when current status is Issued";
+        public const string NextStatusCannotBeTerminated = "Next status cannot be Terminated";
+
+        public const string NextStatusMustBeActiveWhenCurrentStatusIsIssued =
+            "Next status must be Active when current status is Issued";
+
+        public const string NextStatusMustBeIssuedWhenCurrentStatusIsRequested =
+            "Next status must be Issued when current status is Requested";
+
+        public const string NextStatusMustBeBlockedWhenCurrentStatusIsActive =
+            "Next status must be Blocked when current status is Active";
+
+        public const string NextStatusMustBeActiveWhenCurrentStatusIsBlocked =
+            "Next status must be Active when current status is Blocked";
 
         public const string ExpectedStatusMustBeTheSameAsRequestedStatus =
             "Expected status must be the same as requested status";
+
+        public const string ExpectedStatusMustBeTerminated =
+            "Expected status must be Terminated when requested status is null";
     }
 }

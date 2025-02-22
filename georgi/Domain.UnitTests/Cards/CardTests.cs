@@ -117,7 +117,7 @@ public sealed class CardTests
 
         //Assert
         exception.CardId.ShouldBe(card.CardId);
-        exception.Reason.ShouldBe(Card.Errors.RequestedStatusMustBeActiveWhenCurrentStatusIsIssued);
+        exception.Reason.ShouldBe(Card.Errors.NextStatusMustBeActiveWhenCurrentStatusIsIssued);
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public sealed class CardTests
 
         //Assert
         exception.CardId.ShouldBe(card.CardId);
-        exception.Reason.ShouldBe(Card.Errors.RequestedStatusMustBeActiveWhenCurrentStatusIsIssued);
+        exception.Reason.ShouldBe(Card.Errors.NextStatusMustBeActiveWhenCurrentStatusIsIssued);
     }
 
     [Fact]
@@ -204,5 +204,107 @@ public sealed class CardTests
         //Assert
         card.CurrentStatus.ShouldBe(CardStatus.Blocked);
         card.RequestedStatus.ShouldBeNull();
+    }
+
+    [Fact]
+    public void ValidateStatusCompatibility_ShouldThrowException_WhenCurrentStatusIsTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Terminated)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() =>
+            card.ValidateStatusCompatibility(CardStatus.Active));
+
+        //Arrange
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.CurrentStatusCannotBeTerminated);
+    }
+
+    [Fact]
+    public void ValidateStatusCompatibility_ShouldThrowException_WhenNextStatusIsTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Blocked)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() =>
+            card.ValidateStatusCompatibility(CardStatus.Terminated));
+
+        //Arrange
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.NextStatusCannotBeTerminated);
+    }
+
+    [Fact]
+    public void ValidateStatusCompatibility_ShouldThrowException_WhenCurrentStatusIsRequestedButNextStatusIsNotIssued()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Requested)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() =>
+            card.ValidateStatusCompatibility(CardStatus.Active));
+
+        //Arrange
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.NextStatusMustBeIssuedWhenCurrentStatusIsRequested);
+    }
+
+    [Fact]
+    public void ValidateStatusCompatibility_ShouldThrowException_WhenCurrentStatusIsIssuedButNextStatusIsNotActive()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Issued)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() =>
+            card.ValidateStatusCompatibility(CardStatus.Blocked));
+
+        //Arrange
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.NextStatusMustBeActiveWhenCurrentStatusIsIssued);
+    }
+
+    [Fact]
+    public void ValidateStatusCompatibility_ShouldThrowException_WhenCurrentStatusIsActiveButNextStatusIsNotBlocked()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Active)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() =>
+            card.ValidateStatusCompatibility(CardStatus.Issued));
+
+        //Arrange
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.NextStatusMustBeBlockedWhenCurrentStatusIsActive);
+    }
+
+    [Fact]
+    public void ValidateStatusCompatibility_ShouldThrowException_WhenCurrentStatusIsBlockedButNextStatusIsNotActive()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Blocked)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() =>
+            card.ValidateStatusCompatibility(CardStatus.Issued));
+
+        //Arrange
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.NextStatusMustBeActiveWhenCurrentStatusIsBlocked);
     }
 }
