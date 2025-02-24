@@ -1,4 +1,3 @@
-using Domain.Cards;
 using Domain.Cards.Issuance;
 
 using Microsoft.EntityFrameworkCore;
@@ -11,10 +10,5 @@ public sealed class CardIssuanceConfiguration : IEntityTypeConfiguration<CardIss
     public void Configure(EntityTypeBuilder<CardIssuance> builder)
     {
         builder.HasKey(x => x.CardId);
-
-        builder
-            .HasOne<Card>()
-            .WithOne()
-            .HasForeignKey<CardIssuance>(x => x.CardId);
     }
 }

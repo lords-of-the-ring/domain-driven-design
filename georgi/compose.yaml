@@ -1,0 +1,8 @@
+﻿services:
+  web:
+    image: card-system-api
+    build:
+      context: .
+      dockerfile: src/Web/Dockerfile
+    environment:
+      DefaultConnection: "Server=localhost,1434; Database=card-system; User Id=sa; Password=Qwerty1@; TrustServerCertificate=True;"
