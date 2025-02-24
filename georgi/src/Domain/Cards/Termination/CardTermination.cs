@@ -39,17 +39,17 @@ public sealed class CardTermination : DomainEntity
     {
         if (card.CurrentStatus == CardStatus.Terminated)
         {
-            throw new CardDomainException(card.CardId, "Current card status cannot be Terminated.");
+            throw new CardDomainException(card.CardId, Errors.CurrentCardStatusCannotBeTerminated);
         }
 
         if (card.RequestedStatus == CardStatus.Terminated)
         {
-            throw new CardDomainException(card.CardId, "Requested card status cannot be Terminated.");
+            throw new CardDomainException(card.CardId, Errors.RequestedCardStatusCannotBeTerminated);
         }
 
         if (reason is TerminationReason.Expired)
         {
-            throw new CardDomainException(card.CardId, "Termination reason Expired is not allowed.");
+            throw new CardDomainException(card.CardId, Errors.TerminationReasonExpiredIsNotAllowed);
         }
 
         var termination = new CardTermination
@@ -97,5 +97,12 @@ public sealed class CardTermination : DomainEntity
         card.CompleteStatusChange(CardStatus.Terminated);
         expirationTermination.RaiseDomainEvent(
             new CardTerminatedDomainEvent { CardTermination = expirationTermination });
+    }
+
+    public static class Errors
+    {
+        public const string CurrentCardStatusCannotBeTerminated = "Current card status cannot be Terminated";
+        public const string RequestedCardStatusCannotBeTerminated = "Requested card status cannot be Terminated";
+        public const string TerminationReasonExpiredIsNotAllowed = "Termination reason Expired is not allowed";
     }
 }
