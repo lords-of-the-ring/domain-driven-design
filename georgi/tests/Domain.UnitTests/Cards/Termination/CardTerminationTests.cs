@@ -14,6 +14,59 @@ namespace Domain.UnitTests.Cards.Termination;
 public sealed class CardTerminationTests
 {
     [Fact]
+    public void Complete_ShouldNotModifyAnyCardTerminationProperties_WhenCardTerminationCompleteDateIsNotNull()
+    {
+        //Arrange
+        var dateTime = Substitute.For<IDateTime>();
+        dateTime.UtcNow.Returns(new DateTimeOffset(new DateTime(2025, 02, 24)));
+
+        var termination = TestHelper.CreateInstance<CardTermination>()
+            .SetProperty(x => x.CompleteDate, TerminationCompleteDate.From(dateTime));
+
+        //Act
+        termination.Complete(dateTime);
+
+        //Assert
+        termination.CompleteDate.ShouldBe(TerminationCompleteDate.From(dateTime));
+        termination.Card.ShouldBeNull();
+        termination.DomainEvents.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Complete_ShouldModifyCardTerminationProperties_WhenCardTerminationCompleteDateIsNull()
+    {
+        //Arrange
+        var dateTime = Substitute.For<IDateTime>();
+        dateTime.UtcNow.Returns(new DateTimeOffset(new DateTime(2025, 02, 24)));
+
+        var termination = TestHelper.CreateInstance<CardTermination>()
+            .SetProperty(x => x.Card, card =>
+            {
+                card.SetProperty(x => x.CurrentStatus, CardStatus.Active);
+                card.SetProperty(x => x.RequestedStatus, CardStatus.Terminated);
+            });
+
+        //Act
+        termination.Complete(dateTime);
+
+        //Assert
+        termination.Card.CurrentStatus.ShouldBe(CardStatus.Terminated);
+        termination.Card.RequestedStatus.ShouldBeNull();
+
+        var cardTerminatedDomainEvent = new CardTerminatedDomainEvent { CardTermination = termination };
+        termination.AssertAllProperties(p =>
+        {
+            p.Expect(x => x.CardId, null);
+            p.Expect(x => x.Card, termination.Card);
+            p.Expect(x => x.Reason, default!);
+            p.Expect(x => x.UserId, null);
+            p.Expect(x => x.RequestDate, null);
+            p.Expect(x => x.CompleteDate, TerminationCompleteDate.From(dateTime));
+            p.Expect(x => x.DomainEvents, [cardTerminatedDomainEvent]);
+        });
+    }
+
+    [Fact]
     public void Request_ShouldThrowException_WhenCurrentCardStatusIsTerminated()
     {
         //Arrange
@@ -106,6 +159,87 @@ public sealed class CardTerminationTests
             p.Expect(x => x.RequestDate, TerminationRequestDate.From(dateTime));
             p.Expect(x => x.CompleteDate, null);
             p.Expect(x => x.DomainEvents, [cardTerminationRequestedDomainEvent]);
+        });
+    }
+
+    [Fact]
+    public async Task Expire_ShouldNeitherCreateCardTerminationNorModifyProperties_WhenCurrentCardStatusIsTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Terminated)
+            .SetProperty(x => x.RequestedStatus, null);
+
+        //Act
+        await CardTermination.Expire(card, null!, null!, CancellationToken.None);
+
+        //Assert
+        card.RequestedStatus.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Expire_ShouldCompleteRequestedCardTermination_WhenRequestedCardStatusIsTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Active)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Terminated);
+
+        var termination = TestHelper.CreateInstance<CardTermination>()
+            .SetProperty(x => x.Card, card);
+
+        var cardTerminationRepository = Substitute.For<ICardTerminationRepository>();
+        cardTerminationRepository.SingleAsync(Arg.Any<CardId>(), Arg.Any<CancellationToken>())
+            .Returns(termination);
+
+        var dateTime = Substitute.For<IDateTime>();
+        dateTime.UtcNow.Returns(new DateTimeOffset(new DateTime(2025, 02, 24)));
+
+        //Act
+        await CardTermination.Expire(card, dateTime, cardTerminationRepository, CancellationToken.None);
+
+        //Assert
+        card.RequestedStatus.ShouldBeNull();
+        card.CurrentStatus.ShouldBe(CardStatus.Terminated);
+        termination.DomainEvents.ShouldHaveSingleItem();
+        termination.CompleteDate.ShouldBe(TerminationCompleteDate.From(dateTime));
+        await cardTerminationRepository.Received().SingleAsync(card.CardId, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task Expire_ShouldCreateCompletedCardTermination_WhenNoRequestedCardTerminationIsPresent()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Active)
+            .SetProperty(x => x.RequestedStatus, CardStatus.Blocked);
+
+        var cardTerminationRepository = Substitute.For<ICardTerminationRepository>();
+        cardTerminationRepository.AddCardTermination(Arg.Any<CardTermination>());
+
+        var dateTime = Substitute.For<IDateTime>();
+        dateTime.UtcNow.Returns(new DateTimeOffset(new DateTime(2025, 02, 24)));
+
+        //Act
+        await CardTermination.Expire(card, dateTime, cardTerminationRepository, CancellationToken.None);
+
+        //Assert
+        card.CurrentStatus.ShouldBe(CardStatus.Terminated);
+        card.RequestedStatus.ShouldBeNull();
+
+        var termination = cardTerminationRepository.GetFirstArgument<CardTermination>();
+        cardTerminationRepository.Received().AddCardTermination(termination);
+
+        var cardTerminatedDomainEvent = new CardTerminatedDomainEvent { CardTermination = termination };
+        termination.AssertAllProperties(p =>
+        {
+            p.Expect(x => x.CardId, card.CardId);
+            p.Expect(x => x.Card, card);
+            p.Expect(x => x.Reason, TerminationReason.Expired);
+            p.Expect(x => x.CompleteDate, TerminationCompleteDate.From(dateTime));
+            p.Expect(x => x.RequestDate, TerminationRequestDate.From(dateTime));
+            p.Expect(x => x.UserId, UserId.ExternalIssuer);
+            p.Expect(x => x.DomainEvents, [cardTerminatedDomainEvent]);
         });
     }
 }
