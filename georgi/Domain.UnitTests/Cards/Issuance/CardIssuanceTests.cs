@@ -144,7 +144,7 @@ public sealed class CardIssuanceTests
     }
 
     [Fact]
-    public void Request_ShouldThrowException_WhenRequestingCardIssuanceRenewalAndPendingAccountBlocksArePresent()
+    public void Request_ShouldThrowException_WhenPendingAccountBlocksArePresent()
     {
         //Arrange
         var credit = TestHelper.CreateInstance<Credit>()
@@ -152,22 +152,20 @@ public sealed class CardIssuanceTests
             .SetProperty(x => x.Type, CreditType.Regular)
             .SetProperty(x => x.CreditId, CreditId.New());
 
-        var lastCardIssuance = TestHelper.CreateInstance<LastAccountCardIssuance>()
-            .SetProperty(x => x.Value, value =>
-            {
-                value.SetProperty(v => v!.CardId, CardId.New());
-            });
-
         var accountBlockInfo = TestHelper.CreateInstance<AccountBlockInfo>()
             .SetProperty(x => x.HasPendingBlocks, true);
 
+        var lastCardIssuance = TestHelper.CreateInstance<LastAccountCardIssuance>();
+
+        var accountId = AccountId.New();
+
         //Act
-        var exception = Should.Throw<CardDomainException>(() =>
+        var exception = Should.Throw<AccountDomainException>(() =>
         {
             CardIssuance.Request(
                 null!,
                 credit,
-                null!,
+                accountId,
                 lastCardIssuance,
                 accountBlockInfo,
                 default!,
@@ -177,7 +175,7 @@ public sealed class CardIssuanceTests
         });
 
         //Assert
-        exception.CardId.ShouldBe(lastCardIssuance.Value!.CardId);
+        exception.AccountId.ShouldBe(accountId);
         exception.Reason.ShouldBe(CardIssuance.Errors.PendingAccountBlocksArePresent);
     }
 

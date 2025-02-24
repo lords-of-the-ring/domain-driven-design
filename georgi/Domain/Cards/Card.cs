@@ -1,6 +1,5 @@
 using Domain.Abstractions;
 using Domain.Accounts;
-using Domain.Cards.Issuance;
 using Domain.Cards.Issuers;
 
 namespace Domain.Cards;

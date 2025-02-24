@@ -53,9 +53,10 @@ public sealed class CardIssuance : DomainEntity
         {
             CheckIfRequestingInitialCardIssuanceIsAllowed(credit);
         }
-        else
+
+        if (accountBlockInfo.HasPendingBlocks)
         {
-            CheckIfRequestingCardIssuanceRenewalIsAllowed(accountBlockInfo, lastCardIssuance);
+            throw new AccountDomainException(accountId, Errors.PendingAccountBlocksArePresent);
         }
 
         var card = Card.Create(accountId, cardType, cardIssuerId);
@@ -82,17 +83,6 @@ public sealed class CardIssuance : DomainEntity
         if (credit.Type != CreditType.Regular)
         {
             throw new CreditDomainException(credit.CreditId, Errors.CreditTypeMustBeRegular);
-        }
-    }
-
-    private static void CheckIfRequestingCardIssuanceRenewalIsAllowed(AccountBlockInfo blockInfo,
-        LastAccountCardIssuance lastCardIssuance)
-    {
-        ArgumentNullException.ThrowIfNull(lastCardIssuance.Value);
-
-        if (blockInfo.HasPendingBlocks)
-        {
-            throw new CardDomainException(lastCardIssuance.Value.CardId, Errors.PendingAccountBlocksArePresent);
         }
     }
 
