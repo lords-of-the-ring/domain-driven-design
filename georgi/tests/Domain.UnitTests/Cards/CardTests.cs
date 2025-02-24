@@ -4,7 +4,7 @@ using Domain.Cards.Issuers;
 
 using Shouldly;
 
-using Testing.Abstractions;
+using Testing.Infrastructure;
 
 namespace Domain.UnitTests.Cards;
 

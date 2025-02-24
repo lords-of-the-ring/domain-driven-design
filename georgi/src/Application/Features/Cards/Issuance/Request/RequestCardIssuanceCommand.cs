@@ -2,7 +2,7 @@ using Domain.Accounts;
 using Domain.Cards;
 using Domain.Cards.Issuers;
 
-namespace Application.Features.Cards.Issuance.RequestCardIssuance;
+namespace Application.Features.Cards.Issuance.Request;
 
 public sealed record RequestCardIssuanceCommand
 {

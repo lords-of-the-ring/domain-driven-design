@@ -7,7 +7,7 @@ using Domain.Cards.Issuance;
 using Domain.Credits;
 using Domain.Users;
 
-namespace Application.Features.Cards.Issuance.RequestCardIssuance;
+namespace Application.Features.Cards.Issuance.Request;
 
 public sealed class RequestCardIssuanceCommandHandler(
     CommandHandlerArguments arguments,

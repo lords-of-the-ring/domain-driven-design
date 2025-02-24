@@ -1,7 +1,7 @@
 using Domain.Cards;
 using Domain.Cards.Issuance;
 
-namespace Application.Features.Cards.Issuance.CompleteCardIssuance;
+namespace Application.Features.Cards.Issuance.Complete;
 
 public sealed record CompleteCardIssuanceCommand
 {

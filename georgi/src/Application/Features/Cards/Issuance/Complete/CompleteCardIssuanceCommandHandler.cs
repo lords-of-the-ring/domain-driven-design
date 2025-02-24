@@ -3,7 +3,7 @@ using Application.Abstractions;
 using Domain.Abstractions;
 using Domain.Cards.Issuance;
 
-namespace Application.Features.Cards.Issuance.CompleteCardIssuance;
+namespace Application.Features.Cards.Issuance.Complete;
 
 public sealed class CompleteCardIssuanceCommandHandler(
     CommandHandlerArguments arguments,

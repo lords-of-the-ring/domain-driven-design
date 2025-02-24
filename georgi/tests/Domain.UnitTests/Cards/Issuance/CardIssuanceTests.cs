@@ -10,7 +10,7 @@ using NSubstitute;
 
 using Shouldly;
 
-using Testing.Abstractions;
+using Testing.Infrastructure;
 
 namespace Domain.UnitTests.Cards.Issuance;
 

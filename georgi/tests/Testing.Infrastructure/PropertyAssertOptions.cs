@@ -3,7 +3,7 @@ using System.Reflection;
 
 using Shouldly;
 
-namespace Testing.Abstractions;
+namespace Testing.Infrastructure;
 
 public sealed record PropertyAssertOptions<TObject>
 {

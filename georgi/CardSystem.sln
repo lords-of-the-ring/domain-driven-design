@@ -3,21 +3,27 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{C3A4DE01-7760-4DEF-8E08-13895B581564}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "src\Domain\Domain.csproj", "{C3A4DE01-7760-4DEF-8E08-13895B581564}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{00132EA0-8624-480D-853B-19E5D693E42C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "src\Application\Application.csproj", "{00132EA0-8624-480D-853B-19E5D693E42C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{CEDBE61C-01EA-45C2-AE6A-36AA89FF7A97}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "root", "root", "{CEDBE61C-01EA-45C2-AE6A-36AA89FF7A97}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		nuget.config = nuget.config
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testing.Infrastructure", "Testing.Infrastructure\Testing.Infrastructure.csproj", "{99CA529D-93B1-42AA-9E68-987FD12A8BBE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testing.Infrastructure", "tests\Testing.Infrastructure\Testing.Infrastructure.csproj", "{99CA529D-93B1-42AA-9E68-987FD12A8BBE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.UnitTests", "Domain.UnitTests\Domain.UnitTests.csproj", "{7A29DB99-03C3-4C12-B8ED-9DF78A4EFCB7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.UnitTests", "tests\Domain.UnitTests\Domain.UnitTests.csproj", "{7A29DB99-03C3-4C12-B8ED-9DF78A4EFCB7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{940F4F32-5B96-4ECD-821C-5D34FD7A010C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "src\Infrastructure\Infrastructure.csproj", "{940F4F32-5B96-4ECD-821C-5D34FD7A010C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{09EFF777-2081-43F7-A01A-9727E67C8C18}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B53C2353-9091-4F15-8CA5-DE0B7A8763F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application.UnitTests", "tests\Application.UnitTests\Application.UnitTests.csproj", "{6A54B782-DD10-474F-ADAB-C261C62FB482}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,5 +54,17 @@ Global
 		{940F4F32-5B96-4ECD-821C-5D34FD7A010C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{940F4F32-5B96-4ECD-821C-5D34FD7A010C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{940F4F32-5B96-4ECD-821C-5D34FD7A010C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A54B782-DD10-474F-ADAB-C261C62FB482}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A54B782-DD10-474F-ADAB-C261C62FB482}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A54B782-DD10-474F-ADAB-C261C62FB482}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A54B782-DD10-474F-ADAB-C261C62FB482}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7A29DB99-03C3-4C12-B8ED-9DF78A4EFCB7} = {09EFF777-2081-43F7-A01A-9727E67C8C18}
+		{99CA529D-93B1-42AA-9E68-987FD12A8BBE} = {09EFF777-2081-43F7-A01A-9727E67C8C18}
+		{00132EA0-8624-480D-853B-19E5D693E42C} = {B53C2353-9091-4F15-8CA5-DE0B7A8763F1}
+		{C3A4DE01-7760-4DEF-8E08-13895B581564} = {B53C2353-9091-4F15-8CA5-DE0B7A8763F1}
+		{940F4F32-5B96-4ECD-821C-5D34FD7A010C} = {B53C2353-9091-4F15-8CA5-DE0B7A8763F1}
+		{6A54B782-DD10-474F-ADAB-C261C62FB482} = {09EFF777-2081-43F7-A01A-9727E67C8C18}
 	EndGlobalSection
 EndGlobal

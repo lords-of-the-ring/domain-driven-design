@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Testing.Abstractions;
+namespace Testing.Infrastructure;
 
 public static class TestHelper
 {
