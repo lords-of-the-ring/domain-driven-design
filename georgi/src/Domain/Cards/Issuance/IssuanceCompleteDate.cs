@@ -4,5 +4,9 @@ namespace Domain.Cards.Issuance;
 
 public sealed record IssuanceCompleteDate
 {
-    public static IssuanceCompleteDate From(IDateTime dateTime) => new();
+    private IssuanceCompleteDate() { }
+
+    public required DateTimeOffset Value { get; init; }
+
+    public static IssuanceCompleteDate From(IDateTime dateTime) => new() { Value = dateTime.UtcNow };
 }

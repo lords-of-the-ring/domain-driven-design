@@ -219,7 +219,7 @@ public sealed class CardIssuanceTests
             cardIssuanceRepository);
 
         //Assert
-        var cardIssuance = (CardIssuance)cardIssuanceRepository.ReceivedCalls().Single().GetArguments()[0]!;
+        var cardIssuance = cardIssuanceRepository.GetFirstArgument<CardIssuance>();
 
         var cardIssuanceRequestedDomainEvent = new CardIssuanceRequestedDomainEvent { CardIssuance = cardIssuance };
 

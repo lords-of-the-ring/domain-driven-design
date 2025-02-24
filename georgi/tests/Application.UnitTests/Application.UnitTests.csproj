@@ -6,6 +6,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Application.UnitTests</RootNamespace>
     <TargetFramework>net9.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!--
     To enable the Microsoft Testing Platform 'dotnet test' experience, add property:
@@ -34,8 +35,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Application\Application.csproj" />
-    <ProjectReference Include="..\Testing.Infrastructure\Testing.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Application\Application.csproj"/>
+    <ProjectReference Include="..\Testing.Infrastructure\Testing.Infrastructure.csproj"/>
   </ItemGroup>
 
 </Project>

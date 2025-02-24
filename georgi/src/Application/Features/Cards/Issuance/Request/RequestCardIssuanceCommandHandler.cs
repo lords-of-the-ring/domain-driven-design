@@ -30,7 +30,7 @@ public sealed class RequestCardIssuanceCommandHandler(
         var accountBlockInfo = await accountBlockInfoRepository.LoadAccountBlockInfo(command.AccountId,
             cancellationToken);
 
-        var lastCard = await lastAccountCardIssuanceRepository.Load(command.AccountId, cancellationToken);
+        var lastCardIssuance = await lastAccountCardIssuanceRepository.Load(command.AccountId, cancellationToken);
 
         var userId = currentUserService.GetUserId();
 
@@ -38,7 +38,7 @@ public sealed class RequestCardIssuanceCommandHandler(
             userId,
             credit,
             account.AccountId,
-            lastCard,
+            lastCardIssuance,
             accountBlockInfo,
             command.CardType,
             command.CardIssuerId,
