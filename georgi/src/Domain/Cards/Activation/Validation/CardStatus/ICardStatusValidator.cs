@@ -1,6 +1,6 @@
 using ErrorOr;
 
-namespace Domain.Cards.Activation.Validation.CardStatus;
+namespace Domain.Cards.Activation.Request.Validation.CardStatus;
 
 public interface ICardStatusValidator
 {

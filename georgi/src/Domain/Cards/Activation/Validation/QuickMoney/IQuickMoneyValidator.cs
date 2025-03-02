@@ -1,6 +1,6 @@
 using ErrorOr;
 
-namespace Domain.Cards.Activation.Validation.QuickMoney;
+namespace Domain.Cards.Activation.Request.Validation.QuickMoney;
 
 public interface IQuickMoneyValidator
 {

@@ -1,6 +1,6 @@
 using ErrorOr;
 
-namespace Domain.Cards.Activation.Validation;
+namespace Domain.Cards.Activation.Request.Validation;
 
 public interface IRequestCardActivationValidator
 {
