@@ -32,6 +32,11 @@ public sealed class Card : DomainEntity
             throw new CardDomainException(CardId, Errors.RequestedStatusIsAlreadyTerminated);
         }
 
+        if (newStatus is CardStatus.Terminated && CurrentStatus is CardStatus.Requested)
+        {
+            throw new CardDomainException(CardId, Errors.NewStatusCannotBeTerminatedWhenCurrentStatusIsRequested);
+        }
+
         if (newStatus is CardStatus.Terminated)
         {
             RequestedStatus = CardStatus.Terminated;
@@ -52,6 +57,11 @@ public sealed class Card : DomainEntity
         if (CurrentStatus is CardStatus.Terminated)
         {
             return;
+        }
+
+        if (CurrentStatus is CardStatus.Requested && expectedStatus is CardStatus.Terminated)
+        {
+            throw new CardDomainException(CardId, Errors.ExpectedStatusCannotBeTerminatedWhenCurrentStatusIsRequested);
         }
 
         if (RequestedStatus is null && expectedStatus is not CardStatus.Terminated)
@@ -149,6 +159,9 @@ public sealed class Card : DomainEntity
         public const string CurrentStatusIsAlreadyTerminated = "Current status is already Terminated";
         public const string RequestedStatusIsAlreadyTerminated = "Requested status is already Terminated";
 
+        public const string NewStatusCannotBeTerminatedWhenCurrentStatusIsRequested =
+            "New status cannot be Terminated when current status is Requested";
+
         public const string RequestedStatusMustBeNullWhenNewStatusIsNotTerminated =
             "Requested status must be null when new status is not Terminated";
 
@@ -158,6 +171,9 @@ public sealed class Card : DomainEntity
 
         public const string ExpectedStatusMustBeTerminated =
             "Expected status must be Terminated when requested status is null";
+
+        public const string ExpectedStatusCannotBeTerminatedWhenCurrentStatusIsRequested =
+            "Expected status cannot be Terminated when current status is Requested";
 
         // Validate status compatibility errors
         public const string CurrentStatusCannotBeTerminated = "Current status cannot be Terminated";

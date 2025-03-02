@@ -44,6 +44,22 @@ public sealed class CardTests
     }
 
     [Fact]
+    public void RequestStatusChange_ShouldThrowException_WhenNewStatusIsTerminatedButCurrentStatusIsRequested()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Requested)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() => card.RequestStatusChange(CardStatus.Terminated));
+
+        //Assert
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.NewStatusCannotBeTerminatedWhenCurrentStatusIsRequested);
+    }
+
+    [Fact]
     public void RequestStatusChange_ShouldSetRequestedStatusToTerminated_WhenNewStatusIsTerminated()
     {
         //Arrange
@@ -120,6 +136,22 @@ public sealed class CardTests
         //Assert
         card.CurrentStatus.ShouldBe(CardStatus.Terminated);
         card.RequestedStatus.ShouldBe(notRealCardStatus);
+    }
+
+    [Fact]
+    public void CompleteStatusChange_ShouldThrowException_WhenCurrentStatusIsRequestedButExpectedStatusIsTerminated()
+    {
+        //Arrange
+        var card = TestHelper.CreateInstance<Card>()
+            .SetProperty(x => x.CurrentStatus, CardStatus.Requested)
+            .SetProperty(x => x.CardId, CardId.New());
+
+        //Act
+        var exception = Should.Throw<CardDomainException>(() => card.CompleteStatusChange(CardStatus.Terminated));
+
+        //Assert
+        exception.CardId.ShouldBe(card.CardId);
+        exception.Reason.ShouldBe(Card.Errors.ExpectedStatusCannotBeTerminatedWhenCurrentStatusIsRequested);
     }
 
     [Fact]
