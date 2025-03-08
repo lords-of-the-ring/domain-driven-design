@@ -1,10 +1,10 @@
-using Domain.Cards.Activation.Request.Validation.CardPlastic;
-using Domain.Cards.Activation.Request.Validation.CardStatus;
-using Domain.Cards.Activation.Request.Validation.QuickMoney;
+using Domain.Cards.Activation.Validation.CardPlastic;
+using Domain.Cards.Activation.Validation.CardStatus;
+using Domain.Cards.Activation.Validation.QuickMoney;
 
 using ErrorOr;
 
-namespace Domain.Cards.Activation.Request.Validation;
+namespace Domain.Cards.Activation.Validation;
 
 public sealed class RequestCardActivationValidator(
     ICardStatusValidator cardStatusValidator,

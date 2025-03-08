@@ -3,7 +3,7 @@ using Domain.Credits.QuickMoney;
 
 using ErrorOr;
 
-namespace Domain.Cards.Activation.Request.Validation.QuickMoney;
+namespace Domain.Cards.Activation.Validation.QuickMoney;
 
 public sealed class QuickMoneyValidator(
     ICardRepository cardRepository,

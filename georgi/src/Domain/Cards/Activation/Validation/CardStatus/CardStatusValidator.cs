@@ -1,6 +1,6 @@
 using ErrorOr;
 
-namespace Domain.Cards.Activation.Request.Validation.CardStatus;
+namespace Domain.Cards.Activation.Validation.CardStatus;
 
 public sealed class CardStatusValidator(ICardRepository cardRepository) : ICardStatusValidator
 {

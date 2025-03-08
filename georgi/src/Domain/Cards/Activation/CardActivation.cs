@@ -1,5 +1,5 @@
 using Domain.Abstractions;
-using Domain.Cards.Activation.Request.Validation;
+using Domain.Cards.Activation.Validation;
 using Domain.Users;
 
 namespace Domain.Cards.Activation;

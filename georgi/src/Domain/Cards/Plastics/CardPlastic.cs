@@ -11,6 +11,11 @@ public sealed class CardPlastic : DomainEntity
 
     public required PlasticLocationId LocationId { get; init; }
 
+    public void ChangeLocation()
+    {
+        throw new NotImplementedException();
+    }
+
     public static void Create(Card card, ICardPlasticRepository cardPlasticRepository)
     {
         if (!card.Type.SupportsPlastic())

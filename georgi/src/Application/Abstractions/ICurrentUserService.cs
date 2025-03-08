@@ -1,4 +1,6 @@
-namespace Domain.Users;
+using Domain.Users;
+
+namespace Application.Abstractions;
 
 public interface ICurrentUserService
 {

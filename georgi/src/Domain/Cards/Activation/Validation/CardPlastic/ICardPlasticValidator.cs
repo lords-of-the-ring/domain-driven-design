@@ -1,6 +1,6 @@
 using ErrorOr;
 
-namespace Domain.Cards.Activation.Request.Validation.CardPlastic;
+namespace Domain.Cards.Activation.Validation.CardPlastic;
 
 public interface ICardPlasticValidator
 {
